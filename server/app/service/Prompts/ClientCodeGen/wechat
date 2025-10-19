@@ -1,0 +1,124 @@
+const app = getApp()
+Page({
+  data:{
+    head:{
+     self:'/image/user.jpg',
+     server:'/image/sapper.jpg'
+    },
+    infoList: [],
+    scrolltop: 0
+  },
+
+  onLoad:function(){
+      this.createSocketServer();
+  },
+  resultList: "",
+// 创建服务器连接
+  createSocketServer(){
+      // 服务器地址开头 ws/wss
+      wx.connectSocket({ url: {{url}} })
+
+      // 监控接入与否
+      wx.onSocketOpen(()=>{
+        // 接入成功
+        wx.showToast({
+            title: 'Socket接入成功',
+            icon: 'success'
+        })
+      })
+
+      // 监控信息
+      wx.onSocketMessage((msg)=>{
+        if (msg.data === "__END_OF_RESPONSE__") {
+            var receivedMessage = this.resultList;
+            this.resultList = "";
+            var result = {
+              id: this.id++ ,
+              content: receivedMessage,
+              role: 'Server'    // 标识 —— 服务端发出
+            };
+            // 收集
+            var list = this.data.infoList
+            list.push(result)
+            // 更新
+            this.setData({
+                infoList : list
+            })
+            // 聊天视角
+            this.rollingBottom()
+        } else {
+            var receivedMessage = this.resultList + msg.data;
+            this.resultList = receivedMessage;
+        }
+      })
+
+      // 监控关闭
+      wx.onSocketClose(()=>{
+          // 服务器Socket连接关闭
+          wx.showToast({
+              title: 'Socket已关闭',
+              icon: 'error'
+          })
+      })
+
+      // 监控错误
+      wx.onSocketError((err)=>{
+          console.log('接入异常',err);
+      })
+  },
+
+  message:'',   // 待接收发送的消息
+  id: 0,
+
+  // 获取Input框内的数据
+  handleChange(opt){
+      this.message = opt.detail.value
+  },
+
+  // 发送按钮触发事件
+  handleSend(){
+      // 发送的内容不为空
+      if(this.message){
+          // 发送
+          var messagecontent = JSON.stringify({
+            author: {{author}},
+            agentId: {{agentId}},
+            message: [{role: "user", content: this.message}]
+          });
+          wx.sendSocketMessage({data: messagecontent})
+          // 收集我发出的信息
+          var list = this.data.infoList
+          list.push({
+            id: this.id++ ,
+            content: this.message ,
+            role: 'self'    // 标识 —— 客户端发出
+          })
+          // 更新
+          this.setData({
+              infoList : list,
+              message : ''    // 清空输入框
+          })
+          // 聊天视角
+          this.rollingBottom()
+      }else{
+          wx.showToast({
+              title: '请输入聊天内容',
+              icon: 'none',
+              duration: 1000
+          })
+      }
+  },
+
+  // 聊天视角调整方法
+  rollingBottom(){
+    wx.createSelectorQuery().selectAll('.content-li').boundingClientRect(results=>{
+        results.forEach(result=>{
+            // console.log(result)
+            this.setData({
+                scrollTop : result.bottom
+            })
+        })
+    }).exec()
+  }
+
+})

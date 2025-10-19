@@ -1,0 +1,8 @@
+2025-04-19 03:14:50.036 | INFO     |  -  | Started server process [28232]
+2025-04-19 03:14:50.037 | INFO     |  -  | Waiting for application startup.
+2025-04-19 03:14:50.136 | INFO     |  -  | Application startup complete.
+2025-04-19 03:14:58.578 | INFO     |  b9555e043848483d9b53e9deba85e5d1  | HTTP Request: POST http://localhost:8005/api/v1/sapperchain/generate-answer "HTTP/1.1 200 OK"
+2025-04-19 03:15:56.964 | INFO     |  -  | Shutting down
+2025-04-19 03:15:57.072 | INFO     |  -  | Waiting for application shutdown.
+2025-04-19 03:15:57.074 | INFO     |  -  | Application shutdown complete.
+2025-04-19 03:15:57.074 | INFO     |  -  | Finished server process [28232]

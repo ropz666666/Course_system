@@ -1,0 +1,171 @@
+.course-detail-container {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.course-detail-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.course-detail-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.course-detail-header {
+  margin-bottom: 24px;
+}
+
+.back-button {
+  font-size: 16px;
+  padding: 8px 16px;
+  height: auto;
+}
+
+.back-button:hover {
+  background-color: #f0f0f0;
+}
+
+.course-info-card {
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.course-info-card .ant-card-body {
+  padding: 32px;
+}
+
+.course-cover-large {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.course-cover-placeholder-large {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+}
+
+.course-resources-card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.course-resources-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.course-resources-card .ant-card-body {
+  padding: 24px;
+}
+
+.resource-list-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.3s;
+}
+
+.resource-list-item:hover {
+  background-color: #fafafa;
+  border-radius: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.resource-list-item:last-child {
+  border-bottom: none;
+}
+
+.resource-list-item .ant-list-item-meta-title {
+  margin-bottom: 8px;
+}
+
+.resource-list-item .ant-list-item-meta-description {
+  color: #666;
+}
+
+.resource-list-item .ant-list-item-action {
+  margin-left: 16px;
+}
+
+.resource-list-item .ant-list-item-action > li {
+  padding: 0 4px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .course-detail-container {
+    padding: 16px;
+  }
+  
+  .course-info-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .course-resources-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .resource-list-item {
+    padding: 12px 0;
+  }
+  
+  .resource-list-item:hover {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* 标签样式优化 */
+.ant-tag {
+  margin-right: 8px;
+  border-radius: 4px;
+}
+
+/* 描述列表样式 */
+.ant-descriptions-item-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.ant-descriptions-item-content {
+  color: #333;
+}
+
+/* 按钮样式优化 */
+.ant-btn-primary {
+  border-radius: 6px;
+}
+
+.ant-btn-text {
+  border-radius: 6px;
+}
+
+/* 头像样式 */
+.ant-avatar {
+  flex-shrink: 0;
+}
+
+/* 空状态样式 */
+.ant-empty {
+  padding: 40px 0;
+}
+
+/* 加载状态样式 */
+.ant-spin-container {
+  min-height: 200px;
+}

@@ -1,0 +1,26 @@
+import asyncio
+import websockets
+import json
+
+async def clientLLMresponse()->str:
+    connect = await websockets.connect(<url>)
+    message = [{"role": "user", "content": "what can you do for me?"}]
+    data = {"author": <author>, "agentId": <agentId>, "message": message}
+    replayMessage = ""
+    await connect.send(json.dumps(data))
+    try:
+        while True:
+            response = await connect.recv()
+            replayMessage += response
+            if response == "__END_OF_RESPONSE__":
+                break
+            else:
+                print(f"{response}")
+        return replayMessage
+    finally:
+        await connect.close()
+
+
+result = asyncio.run(clientLLMresponse())
+result = result[:-len("__END_OF_RESPONSE__")]
+print("result:" + result)

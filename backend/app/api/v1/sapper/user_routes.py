@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+from typing import Annotated
+from fastapi import APIRouter, Depends, Path, Query, Request
+from common.exception.errors import RequestError
+
+from app.schema.user_schema import (
+    AddUserParam,
+    AvatarParam,
+    GetCurrentUserInfoDetail,
+    GetUserInfoListDetails,
+    RegisterUserParam,
+    ResetPasswordParam,
+    UpdateUserParam, UserAgentParam,
+)
+from app.service.user_service import user_service
+from common.pagination import DependsPagination, paging_data
+from common.security.jwt import DependsJwtAuth
+from common.security.permission import RequestPermission
+from database.db_mysql import CurrentSession
+from utils.serializers import select_as_dict
+
+router = APIRouter()
+
+
+@router.post('/register', summary='注册用户')
+async def register_user(obj: RegisterUserParam) :
+    await user_service.register(obj=obj)
+    return ''
+
+
+@router.post('/add', summary='添加用户', dependencies=[DependsJwtAuth])
+async def add_user(request: Request, obj: AddUserParam) :
+    await user_service.add(request=request, obj=obj)
+    current_user = await user_service.get_userinfo(username=obj.username)
+    data = GetUserInfoListDetails(**select_as_dict(current_user))
+    return data
+
+
+@router.post('/password/reset', summary='密码重置', dependencies=[DependsJwtAuth])
+async def password_reset(request: Request, obj: ResetPasswordParam) :
+    count = await user_service.pwd_reset(request=request, obj=obj)
+    if count > 0:
+        return ""
+    raise RequestError
+
+
+@router.get('/me', summary='获取当前用户信息', dependencies=[DependsJwtAuth], response_model_exclude={'password'})
+async def get_current_user(request: Request) :
+    user = await user_service.get_with_relation(request=request, user_uuid=request.user.uuid)
+    data = GetCurrentUserInfoDetail(**select_as_dict(user))
+    return data
+
+
+@router.get('/agent/all_add', summary='获取当前用户添加的智能体', dependencies=[DependsJwtAuth])
+async def get_current_user_all_add_agent(request: Request) :
+    user = await user_service.get_with_relation(request=request, user_uuid=request.user.uuid)
+    data = GetCurrentUserInfoDetail(**select_as_dict(user))
+    return data.add_agents
+
+
+@router.post('/agent/reset', summary='重置当前用户添加的智能体', dependencies=[DependsJwtAuth])
+async def get_current_user_reset_agent(request: Request, agent_param: UserAgentParam) :
+    await user_service.reset_agent(request=request, user_uuid=request.user.uuid, agent_param=agent_param)
+    return ""
+
+
+@router.post('/agent', summary='用户添加智能体', dependencies=[DependsJwtAuth])
+async def user_add_agent(request: Request, agent_param: UserAgentParam) :
+    user = await user_service.add_agent(request=request, user_uuid=request.user.uuid, agent_param=agent_param)
+    data = GetCurrentUserInfoDetail(**select_as_dict(user))
+    return data.add_agents
+
+
+@router.delete('/agent', summary='用户删除智能体', dependencies=[DependsJwtAuth])
+async def user_delete_agent(request: Request, agent_param: UserAgentParam) :
+    user = await user_service.delete_agent(request=request, user_uuid=request.user.uuid, agent_param=agent_param)
+    data = GetCurrentUserInfoDetail(**select_as_dict(user))
+    return data.add_agents
+
+
+@router.get('/uuid/{user_uuid}', summary='查看用户信息(uuid)', dependencies=[DependsJwtAuth])
+async def get_user_by_uuid(user_uuid: Annotated[str, Path(...)]) :
+    current_user = await user_service.get_userinfo_by_uuid(user_uuid=user_uuid)
+    data = GetUserInfoListDetails(**select_as_dict(current_user))
+    return data
+
+
+@router.get('/{username}', summary='查看用户信息(name)', dependencies=[DependsJwtAuth])
+async def get_user(username: Annotated[str, Path(...)]) :
+    current_user = await user_service.get_userinfo(username=username)
+    data = GetUserInfoListDetails(**select_as_dict(current_user))
+    return data
+
+
+@router.put('/{username}', summary='更新用户信息', dependencies=[DependsJwtAuth])
+async def update_user(request: Request, username: Annotated[str, Path(...)], obj: UpdateUserParam) :
+    count = await user_service.update(request=request, username=username, obj=obj)
+    if count > 0:
+        return ''
+    raise RequestError
+
+
+@router.put('/{username}/avatar', summary='更新头像', dependencies=[DependsJwtAuth])
+async def update_avatar(request: Request, username: Annotated[str, Path(...)], avatar: AvatarParam) :
+    count = await user_service.update_avatar(request=request, username=username, avatar=avatar)
+    if count > 0:
+        return ''
+    raise RequestError
+
+
+@router.get(
+    '',
+    summary='（模糊条件）分页获取所有用户',
+    dependencies=[
+        DependsJwtAuth,
+        DependsPagination,
+    ],
+)
+async def get_pagination_users(
+    db: CurrentSession,
+    dept: Annotated[int | None, Query()] = None,
+    username: Annotated[str | None, Query()] = None,
+    phone: Annotated[str | None, Query()] = None,
+    status: Annotated[int | None, Query()] = None,
+):
+    user_select = await user_service.get_select(dept=dept, username=username, phone=phone, status=status)
+    page_data = await paging_data(db, user_select, GetUserInfoListDetails)
+    return page_data
+
+
+@router.put('/{pk}/super', summary='修改用户超级权限', dependencies=[DependsJwtAuth])
+async def super_set(request: Request, pk: Annotated[int, Path(...)]) :
+    count = await user_service.update_permission(request=request, pk=pk)
+    if count > 0:
+        return ''
+    raise RequestError
+
+
+@router.put('/{pk}/staff', summary='修改用户后台登录权限', dependencies=[DependsJwtAuth])
+async def staff_set(request: Request, pk: Annotated[int, Path(...)]) :
+    count = await user_service.update_staff(request=request, pk=pk)
+    if count > 0:
+        return ''
+    raise RequestError
+
+
+@router.put('/{pk}/status', summary='修改用户状态', dependencies=[DependsJwtAuth])
+async def status_set(request: Request, pk: Annotated[int, Path(...)]) :
+    count = await user_service.update_status(request=request, pk=pk)
+    if count > 0:
+        return ''
+    raise RequestError
+
+
+@router.put('/{pk}/multi', summary='修改用户多点登录状态', dependencies=[DependsJwtAuth])
+async def multi_set(request: Request, pk: Annotated[int, Path(...)]) :
+    count = await user_service.update_multi_login(request=request, pk=pk)
+    if count > 0:
+        return ''
+    raise RequestError
+
+
+@router.delete(
+    path='/{username}',
+    summary='用户注销',
+    description='用户注销 != 用户登出，注销之后用户将从数据库删除',
+    dependencies=[
+        Depends(RequestPermission('sys:user:del')),
+    ],
+)
+async def delete_user(username: Annotated[str, Path(...)]) :
+    count = await user_service.delete(username=username)
+    if count > 0:
+        return ''
+    raise RequestError

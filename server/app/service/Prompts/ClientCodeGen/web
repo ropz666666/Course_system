@@ -1,0 +1,70 @@
+class WebSocketClient {
+    constructor() {
+        this.url = "{{url}}";
+        this.socket = null;
+    }
+
+    connect() {
+        this.socket = new WebSocket(this.url);
+
+        this.socket.addEventListener('open', () => {
+            console.log('WebSocket Connected. Please enter your query.');
+        });
+
+        this.socket.addEventListener('message', (event) => {
+            const data = event.data;
+            console.log('Received:', data);
+        });
+
+        this.socket.addEventListener('close', () => {
+            console.log('WebSocket Disconnected');
+        });
+
+        this.socket.addEventListener('error', (event) => {
+            console.error('WebSocket Error:', event.message);
+        });
+    }
+
+    sendMessage(message) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(message);
+        } else {
+            console.error('WebSocket is not connected');
+        }
+    }
+
+    close() {
+        if (this.socket) {
+            this.socket.close();
+        }
+    }
+}
+
+const client = new WebSocketClient();
+client.connect();
+const query = "What can you help me?"
+const request = JSON.stringify({
+    author: "{{author}}",
+    agentId: "{{agentId}}",
+    message: [{"role": "user", "content": query}]
+});
+client.sendMessage(request)
+
+const socket = new WebSocket("wss://www.jxselab.com:8000/ws/client/wechat?token=xsxaxaxas&&agent_uuid=agent_vs4TiTw0cqMDn7u4");
+
+socket.addEventListener('open', () => {
+    console.log('WebSocket Connected.');
+
+    const request = "'Users Search': 'What products do you have for sale?'"
+    socket.send(request);
+});
+let res = ""
+socket.addEventListener('message', (event) => {
+    if (event.data === "__END_OF_RESPONSE__"){
+        console.log(res);
+        res = ""
+    }
+    res += event.data
+});
+
+socket.send("now you are an English teacher");

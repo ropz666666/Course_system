@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mcp_service": {
+      "command": "uv",
+      "args": [
+        "run",
+        "E:/virtual_teacher_server/public_tech_lib/mcp_service"
+      ]
+    }
+  }
+}
