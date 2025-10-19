@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Union, List
 
 from sqlalchemy import select, and_, or_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from sqlalchemy_crud_plus import CRUDPlus
 
 from app.model.course.course_grade import CourseGrade

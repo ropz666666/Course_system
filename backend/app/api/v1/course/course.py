@@ -94,8 +94,10 @@ async def create_course(
    
     try:
         # 直接调用CourseService的create_course方法，它内部会检查年级和科目是否存在
-        data = await CourseService.create_course(db=db, obj_in=obj, teacher_uuid=current_user.uuid)
-        return response_base.success(data=data)
+        course_obj = await CourseService.create_course(db=db, obj_in=obj, teacher_uuid=current_user.uuid)
+        # 转换为Pydantic模式对象以避免序列化错误
+        course_detail = GetCourseDetails.model_validate(course_obj)
+        return response_base.success(data=course_detail)
     except Exception as e:
         return response_base.fail(res=CustomResponse(code=400, msg=str(e)))
 

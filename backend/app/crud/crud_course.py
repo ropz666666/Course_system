@@ -131,12 +131,24 @@ class CRUDCourse(CRUDPlus[Course]):
         *,
         obj_in: Dict[str, Any]
     ) -> Course:
-        """创建课程"""
+        """创建课程，包含关联数据预加载"""
         db_obj = Course(**obj_in)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
-        return db_obj
+        
+        # 重新查询以获取完整的关联数据
+        stmt = (
+            select(Course)
+            .options(
+                joinedload(Course.grade),
+                joinedload(Course.subject),
+                joinedload(Course.teacher)
+            )
+            .where(Course.id == db_obj.id)
+        )
+        result = await db.execute(stmt)
+        return result.scalar_one()
 
     async def update_with_relations(
         self,
