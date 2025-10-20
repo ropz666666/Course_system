@@ -15,3 +15,4 @@ from app.model.llm_model import LlmModel
 from app.model.publish import *
 from app.model.user_agent_interaction_model import UserAgentInteraction as Interaction
 from app.model.sys_casbin_rule import CasbinRule
+from app.model.course.course_agent import CourseAgent

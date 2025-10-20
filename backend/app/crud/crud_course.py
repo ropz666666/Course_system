@@ -12,6 +12,10 @@ from app.model.course.course import Course
 
 
 class CRUDCourse(CRUDPlus[Course]):
+    async def get(self, db: AsyncSession, id: int) -> Optional[Course]:
+        """根据ID获取课程"""
+        return await self.get_by_id(db, id=id)
+    
     async def get_by_id(self, db: AsyncSession, *, id: int) -> Optional[Course]:
         """根据ID获取课程详情，包含关联数据"""
         stmt = (
@@ -143,7 +147,8 @@ class CRUDCourse(CRUDPlus[Course]):
             .options(
                 joinedload(Course.grade),
                 joinedload(Course.subject),
-                joinedload(Course.teacher)
+                joinedload(Course.teacher),
+                selectinload(Course.resources)
             )
             .where(Course.id == db_obj.id)
         )

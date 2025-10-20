@@ -78,9 +78,83 @@ async def get_course_detail(
     if not data:
         return response_base.fail(res=CustomResponse(code=404, msg='课程不存在'))
     
-    # 转换为正确的schema格式
-    course_detail = GetCourseDetails.model_validate(data)
-    return response_base.success(data=course_detail)
+    # 手动构建响应数据，避免Pydantic验证时的异步关系访问问题
+    try:
+        course_data = {
+            "id": data.id,
+            "uuid": data.uuid,
+            "title": data.title,
+            "description": data.description,
+            "cover_image": data.cover_image,
+            "grade_id": data.grade_id,
+            "subject_id": data.subject_id,
+            "teacher_uuid": data.teacher_uuid,
+            "sort_order": data.sort_order,
+            "status": data.status,
+            "created_time": data.created_time.isoformat() if data.created_time else None,
+            "updated_time": data.updated_time.isoformat() if data.updated_time else None,
+            "grade": {
+                "id": data.grade.id,
+                "name": data.grade.name,
+                "code": data.grade.code,
+                "sort_order": data.grade.sort_order,
+                "status": data.grade.status,
+                "created_time": data.grade.created_time.isoformat() if data.grade.created_time else None,
+                "updated_time": data.grade.updated_time.isoformat() if data.grade.updated_time else None
+            } if data.grade else None,
+            "subject": {
+                "id": data.subject.id,
+                "name": data.subject.name,
+                "code": data.subject.code,
+                "sort_order": data.subject.sort_order,
+                "status": data.subject.status,
+                "created_time": data.subject.created_time.isoformat() if data.subject.created_time else None,
+                "updated_time": data.subject.updated_time.isoformat() if data.subject.updated_time else None
+            } if data.subject else None,
+            "teacher": {
+                "uuid": data.teacher.uuid,
+                "username": data.teacher.username,
+                "nickname": data.teacher.nickname,
+                "email": data.teacher.email,
+                "phone": data.teacher.phone,
+                "avatar": data.teacher.avatar,
+                "is_superuser": data.teacher.is_superuser,
+                "is_staff": data.teacher.is_staff,
+                "status": data.teacher.status,
+                "created_time": data.teacher.created_time.isoformat() if data.teacher.created_time else None,
+                "updated_time": data.teacher.updated_time.isoformat() if data.teacher.updated_time else None
+            } if data.teacher else None,
+            "resources": []
+        }
+        
+        # 手动处理resources字段，避免异步关系访问问题
+        if data.resources:
+            for resource in data.resources:
+                resource_data = {
+                    "id": resource.id,
+                    "uuid": resource.uuid,
+                    "title": resource.title,
+                    "resource_type": resource.resource_type,
+                    "course_id": resource.course_id,
+                    "upload_user_uuid": resource.upload_user_uuid,
+                    "description": resource.description,
+                    "file_name": resource.file_name,
+                    "file_path": resource.file_path,
+                    "file_size": resource.file_size,
+                    "file_type": resource.file_type,
+                    "download_count": resource.download_count,
+                    "status": resource.status,
+                    "sort_order": resource.sort_order,
+                    "created_time": resource.created_time.isoformat() if resource.created_time else None,
+                    "updated_time": resource.updated_time.isoformat() if resource.updated_time else None,
+                    "course": None,  # 避免循环引用
+                    "uploader": None  # 避免异步访问问题
+                }
+                course_data["resources"].append(resource_data)
+        
+        return response_base.success(data=course_data)
+    except Exception as e:
+        return response_base.fail(res=CustomResponse(code=500, msg=f'获取课程详情失败: {str(e)}'))
 
 
 @router.post('', summary='创建课程', dependencies=[DependsJwtAuth])
@@ -95,9 +169,57 @@ async def create_course(
     try:
         # 直接调用CourseService的create_course方法，它内部会检查年级和科目是否存在
         course_obj = await CourseService.create_course(db=db, obj_in=obj, teacher_uuid=current_user.uuid)
-        # 转换为Pydantic模式对象以避免序列化错误
-        course_detail = GetCourseDetails.model_validate(course_obj)
-        return response_base.success(data=course_detail)
+        
+        # 手动构建响应数据，避免Pydantic验证时的异步关系访问问题
+        course_data = {
+            "id": course_obj.id,
+            "uuid": course_obj.uuid,
+            "title": course_obj.title,
+            "description": course_obj.description,
+            "cover_image": course_obj.cover_image,
+            "grade_id": course_obj.grade_id,
+            "subject_id": course_obj.subject_id,
+            "teacher_uuid": course_obj.teacher_uuid,
+            "sort_order": course_obj.sort_order,
+            "status": course_obj.status,
+            "created_time": course_obj.created_time,
+            "updated_time": course_obj.updated_time,
+            "grade": {
+                "id": course_obj.grade.id,
+                "name": course_obj.grade.name,
+                "code": course_obj.grade.code,
+                "sort_order": course_obj.grade.sort_order,
+                "status": course_obj.grade.status,
+                "created_time": course_obj.grade.created_time,
+                "updated_time": course_obj.grade.updated_time
+            } if course_obj.grade else None,
+            "subject": {
+                "id": course_obj.subject.id,
+                "name": course_obj.subject.name,
+                "code": course_obj.subject.code,
+                "description": course_obj.subject.description,
+                "sort_order": course_obj.subject.sort_order,
+                "status": course_obj.subject.status,
+                "created_time": course_obj.subject.created_time,
+                "updated_time": course_obj.subject.updated_time
+            } if course_obj.subject else None,
+            "teacher": {
+                "uuid": course_obj.teacher.uuid,
+                "username": course_obj.teacher.username,
+                "nickname": course_obj.teacher.nickname,
+                "email": course_obj.teacher.email,
+                "phone": course_obj.teacher.phone,
+                "avatar": course_obj.teacher.avatar,
+                "is_superuser": course_obj.teacher.is_superuser,
+                "is_staff": course_obj.teacher.is_staff,
+                "status": course_obj.teacher.status,
+                "created_time": course_obj.teacher.created_time,
+                "updated_time": course_obj.teacher.updated_time
+            } if course_obj.teacher else None,
+            "resources": []  # 新创建的课程没有资源
+        }
+        
+        return response_base.success(data=course_data)
     except Exception as e:
         return response_base.fail(res=CustomResponse(code=400, msg=str(e)))
 

@@ -52,3 +52,6 @@ class Course(Base):
     resources: Mapped[list['CourseResource']] = relationship(  # noqa: F821
         init=False, back_populates='course', cascade='all, delete-orphan'
     )
+    agents: Mapped[list['CourseAgent']] = relationship(  # noqa: F821
+        init=False, back_populates='course', cascade='all, delete-orphan'
+    )

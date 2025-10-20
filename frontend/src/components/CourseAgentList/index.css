@@ -1,0 +1,64 @@
+.course-agents-card {
+  margin-bottom: 24px;
+}
+
+.course-agents-card .ant-card-head-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.agent-list-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.agent-list-item:last-child {
+  border-bottom: none;
+}
+
+.agent-list-item .ant-list-item-meta-avatar {
+  margin-right: 16px;
+}
+
+.agent-list-item .ant-list-item-meta-title {
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.agent-list-item .ant-list-item-meta-description {
+  color: #666;
+  font-size: 12px;
+}
+
+.agent-list-item .ant-list-item-action {
+  margin-left: 16px;
+}
+
+.agent-list-item:hover {
+  background-color: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0 -16px;
+}
+
+.agent-list-item .ant-space-item {
+  display: flex;
+  align-items: center;
+}
+
+.agent-list-item .ant-tag {
+  margin: 0 4px;
+}
+
+.agent-list-item .ant-btn {
+  border: none;
+  box-shadow: none;
+}
+
+.agent-list-item .ant-btn:hover {
+  background-color: #e6f7ff;
+}
+
+.agent-list-item .ant-btn-dangerous:hover {
+  background-color: #fff2f0;
+}

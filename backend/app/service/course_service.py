@@ -87,11 +87,10 @@ class CourseService:
             subject_nodes = []
             for subject in subjects:
                 # 获取该年级和科目下的课程数量
-                courses = await course.get_list_by_grade_subject(
+                courses = await course.get_by_grade_subject(
                     db,
                     grade_id=grade.id,
-                    subject_id=subject.id,
-                    status=1
+                    subject_id=subject.id
                 )
                 
                 if courses:  # 只显示有课程的科目

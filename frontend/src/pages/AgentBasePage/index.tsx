@@ -18,6 +18,7 @@ import {
 } from 'antd';
 import { useNavigate } from "react-router-dom";
 import AgentCreateModal from "../../modals/AgentCreateModal";
+import CourseAgentMigrateComponent from "../../components/CourseAgentmigrateComponent";
 import { useAgentSelector, useDispatchAgent } from "../../hooks/agent";
 import { AgentCreateReq, AgentRes, keyToTagMap } from "../../types/agentType";
 import {
@@ -28,6 +29,7 @@ import {
     PlusOutlined,
     SearchOutlined,
     CrownOutlined,
+    SendOutlined,
     ToolOutlined
 } from "@ant-design/icons";
 import { useDispatchGlobalState } from "../../hooks/global.ts";
@@ -59,6 +61,8 @@ const AgentBasePage = () => {
 
     const navigate = useNavigate();
     const [createModelVisibility, setCreateModelVisibility] = useState(false);
+    const [migrateModalVisible, setMigrateModalVisible] = useState(false);
+    const [selectedAgent, setSelectedAgent] = useState<AgentRes | null>(null);
 
     const handleSearch = (value: string) => {
         if (value !== searchTerm) {
@@ -93,10 +97,32 @@ const AgentBasePage = () => {
         });
     };
 
+    const handleMigrateAgent = (agent: AgentRes) => {
+        setSelectedAgent(agent);
+        setMigrateModalVisible(true);
+    };
+
+    const handleMigrateSuccess = () => {
+        setMigrateModalVisible(false);
+        setSelectedAgent(null);
+        // 可以在这里添加成功后的其他操作，比如显示通知
+    };
+
     const renderAgentActions = (agent: AgentRes) => (
         <Dropdown
             overlay={
                 <Menu className="rounded-lg shadow-lg border border-gray-100">
+                    <Menu.Item
+                        key="migrate"
+                        icon={<SendOutlined className="text-[#7F56D9]" />}
+                        onClick={(e) => {
+                            e.domEvent.stopPropagation();
+                            handleMigrateAgent(agent);
+                        }}
+                        className="hover:bg-[#F9F5FF] hover:text-[#7F56D9]"
+                    >
+                        迁移到课程
+                    </Menu.Item>
                     <Menu.Item
                         key="download"
                         icon={<DownloadOutlined className="text-[#7F56D9]" />}
@@ -355,6 +381,19 @@ const AgentBasePage = () => {
                 onClose={() => setCreateModelVisibility(false)}
                 onCreate={handleAgentCreate}
             />
+
+            {selectedAgent && (
+                <CourseAgentMigrateComponent
+                    visible={migrateModalVisible}
+                    onCancel={() => {
+                        setMigrateModalVisible(false);
+                        setSelectedAgent(null);
+                    }}
+                    onSuccess={handleMigrateSuccess}
+                    agentUuid={selectedAgent.uuid}
+                    agentName={selectedAgent.name}
+                />
+            )}
         </div>
     );
 };

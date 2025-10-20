@@ -55,15 +55,52 @@ export interface CourseResource {
   course_id: number;
   upload_user_uuid: string;
   description?: string;
-  file_name: string;
-  file_path: string;
-  file_size: number;
-  file_type: string;
+  file_name?: string;
+  file_path?: string;
+  file_size?: number;
+  file_type?: string;
   download_count: number;
   status: number;
-  sort_order: number;
+  sort_order?: number;
   created_time: string;
   updated_time?: string;
+}
+
+export interface CourseAgent {
+  id: number;
+  uuid: string;
+  course_id: number;
+  agent_uuid: string;
+  migrated_by: string;
+  title: string;
+  description?: string;
+  sort_order?: number;
+  status: number;
+  created_time: string;
+  updated_time?: string;
+  agent?: {
+    uuid: string;
+    name: string;
+    description?: string;
+    cover_image?: string;
+    type: string;
+    status: number;
+  };
+  migrator?: {
+    uuid: string;
+    username: string;
+    nickname?: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+  };
+}
+
+export interface UpdateCourseAgentParam {
+  title?: string;
+  description?: string;
+  sort_order?: number;
+  status?: number;
 }
 
 export interface CourseResourceListParams {
@@ -144,9 +181,84 @@ export const courseApi = {
   },
 
   // 下载课程资源
-  downloadCourseResource: (resourceId: number): Promise<Blob> => {
-    return axios.get(`/api/v1/course-resources/${resourceId}/download`, {
-      responseType: 'blob'
+  downloadCourseResource: async (resourceId: number): Promise<Blob> => {
+    // 创建一个新的axios实例，绕过响应拦截器
+    const axiosInstance = axios.create({
+      baseURL: axios.defaults.baseURL,
+      withCredentials: axios.defaults.withCredentials,
     });
+    
+    // 添加请求拦截器以包含认证token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const headers: any = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await axiosInstance.get(`/api/v1/course-resources/${resourceId}/download`, {
+      responseType: 'blob',
+      headers
+    });
+    return response.data;
+  },
+
+  // 预览课程资源
+  previewCourseResource: async (resourceId: number): Promise<Blob> => {
+    // 创建一个新的axios实例，绕过响应拦截器
+    const axiosInstance = axios.create({
+      baseURL: axios.defaults.baseURL,
+      withCredentials: axios.defaults.withCredentials,
+    });
+    
+    // 添加请求拦截器以包含认证token
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const headers: any = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    const response = await axiosInstance.get(`/api/v1/course-resources/${resourceId}/preview`, {
+      responseType: 'blob',
+      headers
+    });
+    return response.data;
+  },
+
+  // 创建课程资源
+  createCourseResource: (data: FormData): Promise<ApiResponse<CourseResource>> => {
+    return axios.post('/api/v1/course-resources', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // 获取课程智能体列表
+  getCourseAgents: (courseId: number, status?: number): Promise<ApiResponse<CourseAgent[]>> => {
+    const params: any = {};
+    if (status !== undefined) {
+      params.status = status;
+    }
+    return axios.get(`/api/v1/course-agents/course/${courseId}`, { params });
+  },
+
+  // 从课程中移除智能体
+  removeAgentFromCourse: (courseId: number, agentUuid: string): Promise<ApiResponse<void>> => {
+    return axios.delete(`/api/v1/course-agents/${courseId}/${agentUuid}`);
+  },
+
+  // 更新课程智能体信息
+  updateCourseAgent: (courseId: number, agentUuid: string, data: UpdateCourseAgentParam): Promise<ApiResponse<CourseAgent>> => {
+    return axios.put(`/api/v1/course-agents/${courseId}/${agentUuid}`, data);
+  },
+
+  // 迁移智能体到课程
+  migrateAgentToCourse: (data: {
+    agent_uuid: string;
+    course_id: number;
+    title?: string;
+    description?: string;
+  }): Promise<ApiResponse<CourseAgent>> => {
+    return axios.post('/api/v1/course-agents/migrate', data);
   }
 };

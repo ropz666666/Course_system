@@ -28,6 +28,7 @@ class CourseResourceService:
 
     @staticmethod
     async def get_resource_detail(db: AsyncSession, *, resource_id: int) -> Optional[CourseResource]:
+        print(resource_id)
         """获取资源详情"""
         return await course_resource.get_by_id(db, id=resource_id)
 
@@ -76,7 +77,8 @@ class CourseResourceService:
     async def create_resource(
         db: AsyncSession,
         *,
-        obj_in: CreateCourseResourceParam
+        obj_in: CreateCourseResourceParam,
+        upload_user_uuid: str
     ) -> CourseResource:
         """创建课程资源"""
         # 检查课程是否存在
@@ -84,9 +86,16 @@ class CourseResourceService:
         if not course_obj:
             raise errors.NotFoundError(msg="课程不存在")
         
-        # 创建资源
+        # 创建资源数据
         resource_data = obj_in.dict()
-        return await course_resource.create(db, obj_in=resource_data)
+        resource_data['upload_user_uuid'] = upload_user_uuid
+        
+        # 创建资源
+        new_resource = await course_resource.create(db, obj_in=resource_data)
+        
+        # 重新获取资源并加载关联数据
+        resource_with_relations = await course_resource.get_by_id(db, id=new_resource.id)
+        return resource_with_relations
 
     @staticmethod
     async def update_resource(
@@ -124,4 +133,9 @@ class CourseResourceService:
     @staticmethod
     async def download_resource(db: AsyncSession, *, resource_id: int) -> Optional[CourseResource]:
         """下载资源（增加下载次数）"""
+        return await course_resource.increment_download_count(db, resource_id=resource_id)
+
+    @staticmethod
+    async def increment_download_count(db: AsyncSession, *, resource_id: int) -> Optional[CourseResource]:
+        """增加下载次数"""
         return await course_resource.increment_download_count(db, resource_id=resource_id)

@@ -12,6 +12,28 @@ from app.model.course.course_resource import CourseResource
 
 
 class CRUDCourseResource(CRUDPlus[CourseResource]):
+    async def create(self, db: AsyncSession, *, obj_in: Dict[str, Any]) -> CourseResource:
+        """创建课程资源"""
+        db_obj = CourseResource(**obj_in)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
+    
+    async def get_by_id(self, db: AsyncSession, *, id: int) -> Optional[CourseResource]:
+        """根据ID获取资源详情，包含关联数据"""
+        stmt = (
+            select(CourseResource)
+            .options(
+                joinedload(CourseResource.course),
+                joinedload(CourseResource.uploader)
+            )
+            .where(CourseResource.id == id)
+        )
+        result = await db.execute(stmt)
+       
+        return result.scalar_one_or_none()
+    
     async def get_by_uuid(self, db: AsyncSession, *, uuid: str) -> Optional[CourseResource]:
         """根据UUID获取资源"""
         stmt = (
@@ -35,7 +57,10 @@ class CRUDCourseResource(CRUDPlus[CourseResource]):
         """根据课程ID获取资源列表的查询对象"""
         stmt = (
             select(CourseResource)
-            .options(joinedload(CourseResource.uploader))
+            .options(
+                joinedload(CourseResource.course),
+                joinedload(CourseResource.uploader)
+            )
             .where(CourseResource.course_id == course_id)
         )
         
@@ -113,7 +138,7 @@ class CRUDCourseResource(CRUDPlus[CourseResource]):
         resource_id: int
     ) -> Optional[CourseResource]:
         """增加下载次数"""
-        resource = await self.get(db, id=resource_id)
+        resource = await self.get_by_id(db, id=resource_id)
         if resource:
             resource.download_count += 1
             await db.commit()

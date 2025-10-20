@@ -13,7 +13,8 @@ import {
   Row,
   Col,
   Descriptions,
-  Avatar
+  Avatar,
+  Modal
 } from 'antd';
 import { 
   DownloadOutlined, 
@@ -22,9 +23,14 @@ import {
   BookOutlined,
   UserOutlined,
   CalendarOutlined,
-  EyeOutlined
+  EyeOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
 import { courseApi, Course, CourseResource } from '../../api/course';
+import { getUserInfo } from '../../api/user';
+import { UserInfo } from '../../types/userType';
+import CreateCourseResourceComponent from '../CreateCourseResourceComponent';
+import CourseAgentList from '../CourseAgentList';
 import './index.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -39,18 +45,42 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
   const [resources, setResources] = useState<CourseResource[]>([]);
   const [loading, setLoading] = useState(true);
   const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isUploadModalVisible, setIsUploadModalVisible] = useState(false);
 
   useEffect(() => {
-    fetchCourseDetail();
-    fetchCourseResources();
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // 获取课程详情
+        const courseResponse = await courseApi.getCourseDetail(courseId);
+        if (courseResponse.code === 200) {
+          setCourse(courseResponse.data);
+        }  
+        // 获取用户信息
+        const userResponse = await getUserInfo();
+        setUserInfo(userResponse);
+        
+        // 获取课程资源
+        await fetchCourseResources();
+      } catch (error) {
+        console.error('获取数据失败:', error);
+        message.error('获取数据失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [courseId]);
 
   const fetchCourseDetail = async () => {
     try {
       setLoading(true);
       const response = await courseApi.getCourseDetail(courseId);
-      if (response.data.code === 200) {
-        setCourse(response.data.data);
+      if (response.code === 200) {
+        setCourse(response.data);
       } else {
         message.error('获取课程详情失败');
       }
@@ -66,8 +96,8 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
     try {
       setResourcesLoading(true);
       const response = await courseApi.getCourseResources({ course_id: courseId });
-      if (response.data.code === 200) {
-        setResources(response.data.data.data.items || []);
+      if (response.code === 200) {
+        setResources(response.data.items || []);
       } else {
         message.error('获取课程资源失败');
       }
@@ -79,11 +109,30 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
     }
   };
 
+  // 处理上传成功后的回调
+  const handleUploadSuccess = () => {
+    setIsUploadModalVisible(false);
+    fetchCourseResources(); // 重新获取资源列表
+    message.success('课程资源上传成功！');
+  };
+
+  // 显示上传模态框
+  const showUploadModal = () => {
+    setIsUploadModalVisible(true);
+  };
+
+  // 关闭上传模态框
+  const handleUploadCancel = () => {
+    setIsUploadModalVisible(false);
+  };
+
   const handleDownload = async (resource: CourseResource) => {
     try {
       const blob = await courseApi.downloadCourseResource(resource.id);
+      console.log("blob", blob)
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
+     
       link.href = url;
       link.download = resource.file_name || resource.title;
       document.body.appendChild(link);
@@ -94,6 +143,68 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
     } catch (error) {
       console.error('下载失败:', error);
       message.error('下载失败');
+    }
+  };
+
+  const handlePreview = async (resource: CourseResource) => {
+    try {
+      const blob = await courseApi.previewCourseResource(resource.id);
+      const url = window.URL.createObjectURL(blob);
+      
+      // 根据文件类型决定预览方式
+      const fileType = resource.file_type.toLowerCase();
+      
+      if (fileType.includes('image')) {
+        // 图片预览
+        Modal.info({
+          title: `预览 - ${resource.title}`,
+          content: (
+            <div style={{ textAlign: 'center' }}>
+              <img 
+                src={url} 
+                alt={resource.title}
+                style={{ maxWidth: '100%', maxHeight: '500px' }}
+              />
+            </div>
+          ),
+          width: 800,
+          onOk: () => window.URL.revokeObjectURL(url)
+        });
+      } else if (fileType.includes('pdf')) {
+        // PDF预览
+        window.open(url, '_blank');
+      } else if (fileType.includes('text') || fileType.includes('json') || fileType.includes('xml')) {
+        // 文本文件预览
+        const text = await blob.text();
+        Modal.info({
+          title: `预览 - ${resource.title}`,
+          content: (
+            <div>
+              <pre style={{ 
+                maxHeight: '400px', 
+                overflow: 'auto', 
+                backgroundColor: '#f5f5f5', 
+                padding: '16px',
+                borderRadius: '4px'
+              }}>
+                {text}
+              </pre>
+            </div>
+          ),
+          width: 800,
+          onOk: () => window.URL.revokeObjectURL(url)
+        });
+      } else {
+        // 其他文件类型在新窗口打开
+        window.open(url, '_blank');
+      }
+    } catch (error: any) {
+      console.error('预览失败:', error);
+      if (error.response?.status === 415) {
+        message.warning('该文件类型不支持预览，请下载后查看');
+      } else {
+        message.error('预览失败');
+      }
     }
   };
 
@@ -165,6 +276,11 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
 
       <Divider />
 
+      {/* 课程智能体列表 */}
+      <CourseAgentList courseId={courseId} />
+
+      <Divider />
+
       {/* 课程资源列表 */}
       <Card 
         title={
@@ -173,6 +289,17 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
             <span>课程资源</span>
             <Tag color="blue">{resources.length}</Tag>
           </Space>
+        }
+        extra={
+          userInfo?.is_superuser && (
+            <Button
+              type="primary"
+              icon={<UploadOutlined />}
+              onClick={showUploadModal}
+            >
+              上传课程资源
+            </Button>
+          )
         }
         bordered={false}
         className="course-resources-card"
@@ -202,6 +329,7 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
                     <Button
                       type="text"
                       icon={<EyeOutlined />}
+                      onClick={() => handlePreview(resource)}
                       size="small"
                     >
                       预览
@@ -259,6 +387,22 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
           )}
         </Spin>
       </Card>
+
+      {/* 上传课程资源模态框 */}
+      <Modal
+        title="上传课程资源"
+        open={isUploadModalVisible}
+        onCancel={handleUploadCancel}
+        footer={null}
+        width={600}
+        destroyOnClose
+      >
+        <CreateCourseResourceComponent
+          courseId={courseId}
+          onSuccess={handleUploadSuccess}
+          onCancel={handleUploadCancel}
+        />
+      </Modal>
     </div>
   );
 };

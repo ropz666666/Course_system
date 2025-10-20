@@ -34,7 +34,7 @@ const menuItems: MenuItem[] = [
     {
         key: 'discover',
         icon: <ShopOutlined />,
-        label: '商店',
+        label: '实验中心',
         sideLabel: 'discover',
         path: '/discover',
         customChildren: [
@@ -268,7 +268,7 @@ const SidebarLayoutComponent = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                             >
-                                课程管理系统
+                                课小助
                             </motion.h1>
                         </div>
                         <Menu
