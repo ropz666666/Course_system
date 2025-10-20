@@ -35,10 +35,22 @@ const menuItems: MenuItem[] = [
         key: 'discover',
         icon: <ShopOutlined />,
         label: '实验中心',
-        sideLabel: 'discover',
+        sideLabel: 'sapper',
         path: '/discover',
         customChildren: [
             {
+                key: 'tools',
+                icon: <ThunderboltOutlined />,
+                label: 'Sapper',
+                path: '/discover',
+                customChildren: [
+            {
+                key: 'tools',
+                icon: <ThunderboltOutlined />,
+                label: '项目发现',
+                path: '/discover/tools',
+                customChildren: [
+                   {
                 key: 'tools',
                 icon: <ThunderboltOutlined />,
                 label: '效率工具',
@@ -74,9 +86,10 @@ const menuItems: MenuItem[] = [
                 label: '竞技游戏',
                 path: '/discover/games'
             }
-        ]
-    },
-    {
+                ]
+                
+            },
+            {
         key: 'workspace',
         icon: <ProjectOutlined />,
         label: '工作间',
@@ -86,6 +99,12 @@ const menuItems: MenuItem[] = [
             { key: 'myAgent', icon: <Bot />, label: '智能体', path: '/workspace/agent' },
             { key: 'knowledge', icon: <Database />, label: '知识库', path: '/workspace/knowledge' },
             { key: 'plugin', icon: <Puzzle />, label: '插件库', path: '/workspace/plugin' },
+        ]
+    },
+            
+        ]
+            },
+           
         ]
     },
     {

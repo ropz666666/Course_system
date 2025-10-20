@@ -358,14 +358,10 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
                         <Space size="large">
                           {resource.file_name && (
                             <Text type="secondary">
-                              文件名: {resource.file_name}
+                              资源名: {resource.file_name}
                             </Text>
                           )}
-                          {resource.file_type && (
-                            <Text type="secondary">
-                              类型: {resource.file_type}
-                            </Text>
-                          )}
+                         
                           {resource.file_size && (
                             <Text type="secondary">
                               大小: {formatFileSize(resource.file_size)}

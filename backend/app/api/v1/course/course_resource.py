@@ -261,17 +261,15 @@ async def create_course_resource(
         os.makedirs(upload_dir, exist_ok=True)
         
         # 生成唯一文件名
-        file_extension = os.path.splitext(file.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_extension_with_dot = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_extension_with_dot}"
         file_path = os.path.join(upload_dir, unique_filename)
         
         # 保存文件
         with open(file_path, "wb") as buffer:
-            content = await file.read()
             buffer.write(content)
         
         # 获取文件信息
-        file_size = len(content)
         file_type = file.content_type or 'application/octet-stream'
         
         # 构建创建参数

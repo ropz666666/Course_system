@@ -102,6 +102,7 @@ const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps
 
       // 调用创建课程资源API
       const response = await courseApi.createCourseResource(formData);
+      console.log('API Response:', response);
       
       if (response.code === 200) {
         message.success('课程资源创建成功');
@@ -188,6 +189,15 @@ const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps
                 message.error('文件大小不能超过100MB');
                 return false;
               }
+              
+              // 文件类型验证
+              const allowedExtensions = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'txt', 'md', 'jpg', 'jpeg', 'png', 'gif', 'mp4', 'avi', 'mov'];
+              const fileExtension = file.name.split('.').pop()?.toLowerCase();
+              if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+                message.error(`不支持的文件类型 '${fileExtension}'。支持的文件类型：${allowedExtensions.join(', ')}`);
+                return false;
+              }
+              
               return true;
             }}
           >
