@@ -14,7 +14,8 @@ import {
   Col,
   Descriptions,
   Avatar,
-  Modal
+  Modal,
+  Popconfirm
 } from 'antd';
 import { 
   DownloadOutlined, 
@@ -24,7 +25,8 @@ import {
   UserOutlined,
   CalendarOutlined,
   EyeOutlined,
-  UploadOutlined
+  UploadOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { courseApi, Course, CourseResource } from '../../api/course';
 import { getUserInfo } from '../../api/user';
@@ -126,6 +128,22 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
     setIsUploadModalVisible(false);
   };
 
+  // 删除课程资源
+  const handleDeleteResource = async (resource: CourseResource) => {
+    try {
+      const response = await courseApi.deleteCourseResource(resource.id);
+      if (response.code === 200) {
+        message.success('删除成功');
+        fetchCourseResources(); // 重新获取资源列表
+      } else {
+        message.error('删除失败');
+      }
+    } catch (error) {
+      console.error('删除失败:', error);
+      message.error('删除失败');
+    }
+  };
+
   const handleDownload = async (resource: CourseResource) => {
     try {
       const blob = await courseApi.downloadCourseResource(resource.id);
@@ -152,7 +170,7 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
       const url = window.URL.createObjectURL(blob);
       
       // 根据文件类型决定预览方式
-      const fileType = resource.file_type.toLowerCase();
+      const fileType = resource.file_type?.toLowerCase() || '';
       
       if (fileType.includes('image')) {
         // 图片预览
@@ -330,8 +348,27 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
                       size="small"
                     >
                       预览
-                    </Button>
-                  ]}
+                    </Button>,
+                    userInfo?.is_superuser && (
+                      <Popconfirm
+                        title="确认删除"
+                        description="确定要删除这个课程资源吗？删除后无法恢复。"
+                        onConfirm={() => handleDeleteResource(resource)}
+                        okText="确定"
+                        cancelText="取消"
+                        okType="danger"
+                      >
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          size="small"
+                        >
+                          删除
+                        </Button>
+                      </Popconfirm>
+                    )
+                  ].filter(Boolean)}
                 >
                   <List.Item.Meta
                     avatar={

@@ -23,6 +23,8 @@ import {
   CalendarOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../stores';
 import { courseApi, CourseAgent, UpdateCourseAgentParam } from '../../api/course';
 import './index.css';
 
@@ -39,6 +41,10 @@ const CourseAgentList: React.FC<CourseAgentListProps> = ({ courseId }) => {
   const [editingAgent, setEditingAgent] = useState<CourseAgent | null>(null);
   const [form] = Form.useForm();
   const navigate = useNavigate();
+
+  // 获取当前用户信息
+  const currentUser = useSelector((state: RootState) => state.user.user);
+  const isSuperUser = currentUser?.is_superuser || false;
 
   useEffect(() => {
     fetchCourseAgents();
@@ -184,25 +190,28 @@ const CourseAgentList: React.FC<CourseAgentListProps> = ({ courseId }) => {
                   >
                     编辑
                   </Button>,
-                  <Popconfirm
-                    title="确定要从课程中移除这个智能体吗？"
-                    onConfirm={(e) => {
-                      e?.stopPropagation();
-                      handleRemoveAgent(agent);
-                    }}
-                    okText="确定"
-                    cancelText="取消"
-                  >
-                    <Button
-                      type="text"
-                      danger
-                      icon={<DeleteOutlined />}
-                      size="small"
-                      onClick={(e) => e.stopPropagation()}
+                  // 只有超级用户才能看到移除按钮
+                  ...(isSuperUser ? [
+                    <Popconfirm
+                      title="确定要从课程中移除这个智能体吗？"
+                      onConfirm={(e) => {
+                        e?.stopPropagation();
+                        handleRemoveAgent(agent);
+                      }}
+                      okText="确定"
+                      cancelText="取消"
                     >
-                      移除
-                    </Button>
-                  </Popconfirm>
+                      <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        size="small"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        移除
+                      </Button>
+                    </Popconfirm>
+                  ] : [])
                 ]}
               >
                 <List.Item.Meta

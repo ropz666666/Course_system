@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import os
 import random
-from fastapi import Request, Response
+import base64
+from fastapi import Request, Response, HTTPException
 from fastapi.security import HTTPBasicCredentials
 from starlette.background import BackgroundTask, BackgroundTasks
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
 
 from app.conf import admin_settings
 from app.crud.crud_user import user_dao
@@ -26,6 +30,37 @@ from core.conf import settings
 from database.db_mysql import async_db_session
 from database.db_redis import redis_client
 from utils.timezone import timezone
+
+
+# 加密token函数，用于跨域认证
+async def encrypt_for_cross_domain(token: str) -> dict:
+    try:
+        # 获取与前端匹配的密钥 (32字节)
+        secret_key = base64.b64decode("G8ZyYyZ0Xf5x5f6uZrwf6ft4gD0pniYAkHp/Y6f4Pv4=")
+        if len(secret_key) > 32:  # 如果解码后长度超过32字节，截取前32字节
+            secret_key = secret_key[:32]
+
+        # 生成16字节的随机IV (128位)
+        iv = os.urandom(16)
+
+        # 使用AES-CBC模式加密
+        cipher = AES.new(secret_key, AES.MODE_CBC, iv)
+        padded_token = pad(token.encode('utf-8'), AES.block_size)
+        encrypted = cipher.encrypt(padded_token)
+
+        # 转换为与前端一致的格式
+        encrypted_ciphertext = base64.b64encode(encrypted).decode('utf-8')
+        iv_hex = iv.hex()  # 使用十六进制格式，与CryptoJS.enc.Hex.stringify(iv)一致
+
+        return {
+            "ciphertext": encrypted_ciphertext,  # Base64编码的密文
+            "iv": iv_hex  # 十六进制编码的IV
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Encryption failed: {str(e)}"
+        )
 
 
 class AuthService:
@@ -89,10 +124,16 @@ class AuthService:
             )
             await db.refresh(current_user)
             current_user = await user_dao.get_with_relation(db=db, user_uuid=current_user.uuid)
+            
+            # 生成跨域认证token
+            cross_domain_token = await encrypt_for_cross_domain(access_token.access_token)
+            
             data = GetLoginToken(
                 access_token=access_token.access_token,
                 access_token_expire_time=access_token.access_token_expire_time,
                 user=current_user,  # type: ignore
+                cross_domain_token=cross_domain_token["ciphertext"],
+                cross_domain_iv=cross_domain_token["iv"]
             )
             return data
 

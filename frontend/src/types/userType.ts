@@ -13,6 +13,8 @@ export interface JxnuLoginData {
 export interface LoginRes {
   access_token: string;
   user: UserInfo;
+  cross_domain_token: string;
+  cross_domain_iv: string;
 }
 
 export interface CaptchaRes {

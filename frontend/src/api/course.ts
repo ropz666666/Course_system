@@ -233,6 +233,11 @@ export const courseApi = {
     });
   },
 
+  // 删除课程资源
+  deleteCourseResource: (resourceId: number): Promise<ApiResponse<void>> => {
+    return axios.delete(`/api/v1/course-resources/${resourceId}`);
+  },
+
   // 获取课程智能体列表
   getCourseAgents: (courseId: number, status?: number): Promise<ApiResponse<CourseAgent[]>> => {
     const params: any = {};
