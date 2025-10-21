@@ -4,13 +4,20 @@ import {
     ThunderboltOutlined,
     DatabaseOutlined
 } from "@ant-design/icons";
-import {Menu} from "antd";
 import {useNavigate} from "react-router-dom";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getToken } from '../../../utils/auth';
 
+interface CustomMenuItem {
+    key: string;
+    label: string;
+    icon?: React.ReactNode;
+    path?: string;
+    customChildren?: CustomMenuItem[];
+}
+
 interface DiscoverSubMenuProps {
-    items: MenuItem[]
+    items: CustomMenuItem[]
     selectedKeys: string[];
     onItemClick: (key: string) => void;
 }
@@ -18,13 +25,17 @@ interface DiscoverSubMenuProps {
 const DiscoverSubMenu = ({items, selectedKeys, onItemClick }: DiscoverSubMenuProps) => {
     const navigate = useNavigate();
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
-    const [currentSubItems, setCurrentSubItems] = useState<MenuItem[]>([]);
+    const [currentSubItems, setCurrentSubItems] = useState<CustomMenuItem[]>([]);
 
     // 知识图谱跳转函数
     const handleUnigraphRedirect = (targetPath: string) => {
         const unigraph_token = sessionStorage.getItem('redirect_token');
         const iv = sessionStorage.getItem('redirect_iv');
-        console.log(unigraph_token);
+        console.log('Debug sessionStorage:');
+        console.log('redirect_token:', unigraph_token);
+        console.log('redirect_iv:', iv);
+        console.log('All sessionStorage keys:', Object.keys(sessionStorage));
+        console.log('sessionStorage length:', sessionStorage.length);
 
         const user_token = getToken();
         if (unigraph_token && iv && user_token) {
@@ -43,8 +54,15 @@ const DiscoverSubMenu = ({items, selectedKeys, onItemClick }: DiscoverSubMenuPro
     };
 
     // 处理二级菜单点击
-    const handleSecondLevelClick = (item: MenuItem) => {
-        if (item.customChildren && item.customChildren.length > 0) {
+    const handleSecondLevelClick = (item: CustomMenuItem) => {
+        // 检查是否是知识图谱相关的菜单项
+        if (item.key === 'knowledge-graph-creation') {
+            // 知识图谱体验区
+            handleUnigraphRedirect('/experience');
+        } else if (item.key === 'knowledge-graph-management') {
+            // 知识图谱工作间
+            handleUnigraphRedirect('/workspace');
+        } else if (item.customChildren && item.customChildren.length > 0) {
             setCurrentSubItems(item.customChildren);
             if (expandedKeys.includes(item.key)) {
                 setExpandedKeys(expandedKeys.filter(key => key !== item.key));
@@ -59,11 +77,11 @@ const DiscoverSubMenu = ({items, selectedKeys, onItemClick }: DiscoverSubMenuPro
     };
 
     // 处理三级菜单点击
-    const handleThirdLevelClick = (item: MenuItem) => {
+    const handleThirdLevelClick = (item: CustomMenuItem) => {
         // 检查是否是知识图谱相关的菜单项
         if (item.key === 'knowledge-graph-creation') {
             // 知识图谱体验区
-            handleUnigraphRedirect('/workspace');
+            handleUnigraphRedirect('/experience');
         } else if (item.key === 'knowledge-graph-management') {
             // 知识图谱工作间
             handleUnigraphRedirect('/workspace');

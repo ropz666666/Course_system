@@ -24,6 +24,8 @@ class GetNewToken(AccessTokenBase):
 
 class GetLoginToken(AccessTokenBase):
     user: GetCurrentUserInfoDetail
+    cross_domain_token: str | None = None
+    cross_domain_iv: str | None = None
 
 
 class GetRegisterToken(AccessTokenBase):

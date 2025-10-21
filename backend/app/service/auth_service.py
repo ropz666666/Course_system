@@ -127,7 +127,7 @@ class AuthService:
             
             # 生成跨域认证token
             cross_domain_token = await encrypt_for_cross_domain(access_token.access_token)
-            
+            print("cross_domain_token:",cross_domain_token)
             data = GetLoginToken(
                 access_token=access_token.access_token,
                 access_token_expire_time=access_token.access_token_expire_time,

@@ -102,8 +102,16 @@ export const loginUser = createAsyncThunk(
     async (loginForm: LoginData, { rejectWithValue }) => {
         try {
             const response = await userLogin(loginForm);
-            sessionStorage.setItem('redirect_token', response.cross_domain_token);
-            sessionStorage.setItem('redirect_iv', response.cross_domain_iv);
+        
+            if (response.cross_domain_token) {
+                sessionStorage.setItem('redirect_token', response.cross_domain_token);
+            
+            } 
+            
+            if (response.cross_domain_iv) {
+                sessionStorage.setItem('redirect_iv', response.cross_domain_iv);
+               
+            }
             setToken(response.access_token);
             return response;
         } catch (error: unknown) {
