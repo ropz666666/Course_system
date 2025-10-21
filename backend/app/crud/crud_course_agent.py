@@ -141,5 +141,25 @@ class CRUDCourseAgent(CRUDPlus[CourseAgent]):
         await db.commit()
         return True
 
+    async def update(
+        self,
+        db: AsyncSession,
+        *,
+        db_obj: CourseAgent,
+        obj_in: Dict[str, Any]
+    ) -> CourseAgent:
+        """更新课程智能体信息"""
+        # 使用基类的 update_model 方法更新数据
+        await self.update_model(
+            session=db,
+            pk=db_obj.id,
+            obj=obj_in,
+            commit=True
+        )
+        
+        # 刷新对象以获取最新数据
+        await db.refresh(db_obj)
+        return db_obj
+
 
 course_agent = CRUDCourseAgent(CourseAgent)

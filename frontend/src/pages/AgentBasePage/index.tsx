@@ -24,13 +24,13 @@ import { AgentCreateReq, AgentRes, keyToTagMap } from "../../types/agentType";
 import {
     ClearOutlined,
     DeleteOutlined,
-    DownloadOutlined,
     MoreOutlined,
     PlusOutlined,
     SearchOutlined,
     CrownOutlined,
     SendOutlined,
-    ToolOutlined
+    ToolOutlined,
+    RocketOutlined
 } from "@ant-design/icons";
 import { useDispatchGlobalState } from "../../hooks/global.ts";
 import './index.css'
@@ -124,15 +124,15 @@ const AgentBasePage = () => {
                         迁移到课程
                     </Menu.Item>
                     <Menu.Item
-                        key="download"
-                        icon={<DownloadOutlined className="text-[#7F56D9]" />}
+                        key="publish"
+                        icon={<RocketOutlined className="text-[#7F56D9]" />}
                         onClick={(e) => {
                             e.domEvent.stopPropagation();
-                            dispatch.downloadAgentInfo(agent.uuid);
+                            navigate(`/workspace/agent/${agent.uuid}/publish`);
                         }}
                         className="hover:bg-[#F9F5FF] hover:text-[#7F56D9]"
                     >
-                        下载
+                        发布
                     </Menu.Item>
                     <Menu.Item
                         key="delete"

@@ -37,8 +37,7 @@
 .agent-list-item:hover {
   background-color: #fafafa;
   border-radius: 8px;
-  padding: 16px;
-  margin: 0 -16px;
+ 
 }
 
 .agent-list-item .ant-space-item {

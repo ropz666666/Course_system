@@ -274,10 +274,7 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
 
      
 
-      <Divider />
-
-      {/* 课程智能体列表 */}
-      <CourseAgentList courseId={courseId} />
+    
 
       <Divider />
 
@@ -346,8 +343,8 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
                     title={
                       <Space>
                         <Text strong>{resource.title}</Text>
-                        {getResourceTypeTag(resource.resource_type)}
-                        {getStatusTag(resource.status)}
+                        {/* {getResourceTypeTag(resource.resource_type)}
+                        {getStatusTag(resource.status)} */}
                       </Space>
                     }
                     description={
@@ -362,11 +359,11 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
                             </Text>
                           )}
                          
-                          {resource.file_size && (
+                          {/* {resource.file_size && (
                             <Text type="secondary">
                               大小: {formatFileSize(resource.file_size)}
                             </Text>
-                          )}
+                          )} */}
                           <Text type="secondary">
                             下载次数: {resource.download_count}
                           </Text>
@@ -383,7 +380,10 @@ const CourseDetailComponent: React.FC<CourseDetailComponentProps> = ({ courseId,
           )}
         </Spin>
       </Card>
+  <Divider />
 
+      {/* 课程智能体列表 */}
+      <CourseAgentList courseId={courseId} />
       {/* 上传课程资源模态框 */}
       <Modal
         title="上传课程资源"

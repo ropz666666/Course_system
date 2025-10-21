@@ -82,8 +82,7 @@
 .resource-list-item:hover {
   background-color: #fafafa;
   border-radius: 8px;
-  padding-left: 16px;
-  padding-right: 16px;
+ 
 }
 
 .resource-list-item:last-child {

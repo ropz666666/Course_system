@@ -35,91 +35,93 @@ const menuItems: MenuItem[] = [
         key: 'discover',
         icon: <ShopOutlined />,
         label: '实验中心',
-        sideLabel: 'sapper',
+        sideLabel: 'discover',
         path: '/discover',
         customChildren: [
             {
-                key: 'tools',
+                key: 'Sapper',
                 icon: <ThunderboltOutlined />,
-                label: 'Sapper',
+                label: '智能体智造中心Sapper',
                 path: '/discover',
                 customChildren: [
-            {
-                key: 'tools',
-                icon: <ThunderboltOutlined />,
-                label: '项目发现',
-                path: '/discover/tools',
-                customChildren: [
-                   {
-                key: 'tools',
-                icon: <ThunderboltOutlined />,
-                label: '效率工具',
-                path: '/discover/tools'
-            },
-            {
-                key: 'services',
-                icon: <AuditOutlined />,
-                label: '商业服务',
-                path: '/discover/services'
-            },
-            {
-                key: 'education',
-                icon: <ReadOutlined />,
-                label: '学习教育',
-                path: '/discover/education'
-            },
-            {
-                key: 'code',
-                icon: <CodeOutlined />,
-                label: '代码助手',
-                path: '/discover/code'
-            },
-            {
-                key: 'lifestyle',
-                icon: <SmileOutlined />,
-                label: '生活方式',
-                path: '/discover/life'
-            },
-            {
-                key: 'game',
-                icon: <TrophyOutlined />,
-                label: '竞技游戏',
-                path: '/discover/games'
-            }
+                    {
+                        key: 'agent-discovery',
+                        icon: <Bot />,
+                        label: '智能体体验区',
+                        path: '/discover',
+                        customChildren: [
+                            {
+                                key: 'tools',
+                                icon: <ThunderboltOutlined />,
+                                label: '效率工具',
+                                path: '/discover/tools'
+                            },
+                            {
+                                key: 'services',
+                                icon: <AuditOutlined />,
+                                label: '商业服务',
+                                path: '/discover/services'
+                            },
+                            {
+                                key: 'education',
+                                icon: <ReadOutlined />,
+                                label: '学习教育',
+                                path: '/discover/education'
+                            },
+                            {
+                                key: 'code',
+                                icon: <CodeOutlined />,
+                                label: '代码助手',
+                                path: '/discover/code'
+                            },
+                            {
+                                key: 'lifestyle',
+                                icon: <SmileOutlined />,
+                                label: '生活方式',
+                                path: '/discover/life'
+                            },
+                            {
+                                key: 'game',
+                                icon: <TrophyOutlined />,
+                                label: '竞技游戏',
+                                path: '/discover/games'
+                            }
+                        ]
+                    },
+                    {
+                        key: 'workspace',
+                        icon: <ProjectOutlined />,
+                        label: '智能体工作间',
+                        path: '/workspace/agent',
+                        customChildren: [
+                            { key: 'myAgent', icon: <Bot />, label: '智能体', path: '/workspace/agent' },
+                            { key: 'knowledge', icon: <Database />, label: '知识库', path: '/workspace/knowledge' },
+                            { key: 'plugin', icon: <Puzzle />, label: '插件库', path: '/workspace/plugin' },
+                        ]
+                    }
                 ]
-                
             },
             {
-        key: 'workspace',
-        icon: <ProjectOutlined />,
-        label: '工作间',
-        sideLabel: 'workspace',
-        path: '/workspace/agent',
-        customChildren: [
-            { key: 'myAgent', icon: <Bot />, label: '智能体', path: '/workspace/agent' },
-            { key: 'knowledge', icon: <Database />, label: '知识库', path: '/workspace/knowledge' },
-            { key: 'plugin', icon: <Puzzle />, label: '插件库', path: '/workspace/plugin' },
+                key: 'unigraph',
+                icon: <Database />,
+                label: '知识图谱智造中心UniGraph',
+                path: '/discover/unigraph',
+                customChildren: [
+                    {
+                        key: 'knowledge-graph-creation',
+                        icon: <Database />,
+                        label: '知识图谱体验区',
+                        path: '/discover/unigraph/create'
+                    },
+                    {
+                        key: 'knowledge-graph-management',
+                        icon: <ProjectOutlined />,
+                        label: '知识图谱工作间',
+                        path: '/discover/unigraph/manage'
+                    }
+                ]
+            }
         ]
-    },
-            
-        ]
-            },
-           
-        ]
-    },
-    {
-        key: 'tutorial',
-        icon: <BookOutlined />,
-        label: '教程',
-        sideLabel: 'tutorial',
-        path: '/tutorial'
-    },
-    {
-        key: 'case',
-        icon: <CrownOutlined />,
-        sideLabel: 'case',
-        label: '案例',
-        path: '/case'
     }
 ];
 
@@ -307,7 +309,7 @@ const SidebarLayoutComponent = () => {
                     {/* 子菜单侧边栏 */}
                     {currentSubMenu?.customChildren && (
                         <Sider
-                            width={165}
+                            width={240}
                             className="bg-[#FAFAFA] border-r"
                             theme="light"
                         >
@@ -316,7 +318,7 @@ const SidebarLayoutComponent = () => {
                     )}
 
                     {/* 内容区域 */}
-                    <Content className="overflow-auto" id="scrollableDiv">
+                    <Content className="overflow-auto flex-1 min-w-0" id="scrollableDiv">
                         <div className="rounded-lg p-1 h-full">
                             <Outlet />
                         </div>

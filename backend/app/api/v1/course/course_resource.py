@@ -256,6 +256,30 @@ async def create_course_resource(
         if not file.filename:
             raise HTTPException(status_code=400, detail="文件名不能为空")
         
+        # 验证文件扩展名
+        file_extension = os.path.splitext(file.filename)[1].lower().lstrip('.')
+        from core.conf import settings
+        if file_extension not in settings.UPLOAD_ALLOWED_EXTENSIONS:
+            allowed_extensions = ', '.join(sorted(settings.UPLOAD_ALLOWED_EXTENSIONS))
+            raise HTTPException(
+                status_code=400, 
+                detail=f"不支持的文件类型 '{file_extension}'。支持的文件类型：{allowed_extensions}"
+            )
+        
+        # 验证文件大小
+        file_size = 0
+        content = await file.read()
+        file_size = len(content)
+        if file_size > settings.UPLOAD_MAX_FILE_SIZE:
+            max_size_mb = settings.UPLOAD_MAX_FILE_SIZE / (1024 * 1024)
+            raise HTTPException(
+                status_code=400,
+                detail=f"文件大小超过限制。最大允许大小：{max_size_mb:.0f}MB"
+            )
+        
+        # 重置文件指针
+        await file.seek(0)
+        
         # 创建上传目录
         upload_dir = "static/uploads/course_resources"
         os.makedirs(upload_dir, exist_ok=True)

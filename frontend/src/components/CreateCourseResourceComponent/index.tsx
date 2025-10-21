@@ -27,10 +27,6 @@ interface CreateCourseResourceComponentProps {
 
 interface CreateCourseResourceFormData {
   title: string;
-  resource_type: string;
-  description?: string;
-  sort_order: number;
-  status: number;
 }
 
 const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps> = ({
@@ -90,15 +86,12 @@ const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps
       // 创建FormData对象
       const formData = new FormData();
       formData.append('title', values.title);
-      formData.append('resource_type', values.resource_type);
+      formData.append('resource_type', 'textbook'); // 默认为教材
       formData.append('course_id', courseId.toString());
-      formData.append('sort_order', values.sort_order.toString());
-      formData.append('status', values.status.toString());
+      formData.append('sort_order', '1'); // 默认排序为1
+      formData.append('status', '1'); // 默认状态为启用
       formData.append('file', file);
-      
-      if (values.description) {
-        formData.append('description', values.description);
-      }
+      // 不添加description，默认为空
 
       // 调用创建课程资源API
       const response = await courseApi.createCourseResource(formData);
@@ -133,11 +126,6 @@ const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
-        initialValues={{
-          resource_type: 'textbook',
-          sort_order: 1,
-          status: 1,
-        }}
       >
         <Form.Item
           name="title"
@@ -145,32 +133,6 @@ const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps
           rules={[{ required: true, message: '请输入资源标题' }]}
         >
           <Input placeholder="请输入资源标题" />
-        </Form.Item>
-
-        <Form.Item
-          name="resource_type"
-          label="资源类型"
-          rules={[{ required: true, message: '请选择资源类型' }]}
-        >
-          <Select placeholder="请选择资源类型">
-            <Option value="textbook">教材</Option>
-            <Option value="outline">大纲</Option>
-            <Option value="lesson_plan">教案</Option>
-            <Option value="ppt">课件</Option>
-            <Option value="video">视频</Option>
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="description"
-          label="资源描述"
-        >
-          <TextArea 
-            rows={3} 
-            placeholder="请输入资源描述（可选）" 
-            maxLength={500}
-            showCount
-          />
         </Form.Item>
 
         <Form.Item
@@ -209,29 +171,6 @@ const CreateCourseResourceComponent: React.FC<CreateCourseResourceComponentProps
               支持单个文件上传，文件大小不超过100MB
             </p>
           </Dragger>
-        </Form.Item>
-
-        <Form.Item
-          name="sort_order"
-          label="排序"
-          rules={[{ required: true, message: '请输入排序值' }]}
-        >
-          <Input 
-            type="number" 
-            placeholder="请输入排序值" 
-            min={1}
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="status"
-          label="状态"
-          rules={[{ required: true, message: '请选择状态' }]}
-        >
-          <Select placeholder="请选择状态">
-            <Option value={1}>启用</Option>
-            <Option value={0}>禁用</Option>
-          </Select>
         </Form.Item>
 
         <Form.Item>

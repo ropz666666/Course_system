@@ -58,11 +58,32 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .course-card:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
+}
+
+.course-card-menu {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
+
+.course-card-menu .ant-btn {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+.course-card-menu .ant-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .course-cover {

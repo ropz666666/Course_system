@@ -96,6 +96,7 @@ const CourseAgentList: React.FC<CourseAgentListProps> = ({ courseId }) => {
       };
 
       const response = await courseApi.updateCourseAgent(courseId, editingAgent.agent_uuid, updateData);
+      console.log('更新智能体信息响应:', response);
       if (response.code === 200) {
         message.success('更新智能体信息成功');
         setEditModalVisible(false);
@@ -216,8 +217,8 @@ const CourseAgentList: React.FC<CourseAgentListProps> = ({ courseId }) => {
                   title={
                     <Space>
                       <Text strong>{agent.title}</Text>
-                      {agent.agent && getAgentTypeTag(agent.agent.type)}
-                      {getStatusTag(agent.status)}
+                      {/* {agent.agent && getAgentTypeTag(agent.agent.type)}
+                      {getStatusTag(agent.status)} */}
                     </Space>
                   }
                   description={
@@ -226,14 +227,14 @@ const CourseAgentList: React.FC<CourseAgentListProps> = ({ courseId }) => {
                         <Text type="secondary">{agent.description}</Text>
                       )}
                       <Space size="large">
-                        {agent.agent && (
+                        {/* {agent.agent && (
                           <Text type="secondary">
                             原名称: {agent.agent.name}
                           </Text>
-                        )}
+                        )} */}
                         {agent.migrator && (
                           <Text type="secondary">
-                            <UserOutlined /> 迁移者: {agent.migrator.nickname || agent.migrator.username}
+                            <UserOutlined /> 迁移者: {agent.migrator.username}
                           </Text>
                         )}
                         <Text type="secondary">

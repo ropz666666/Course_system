@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Input, Select, Upload, Button, message, Spin } from 'antd';
 import { PlusOutlined, UploadOutlined } from '@ant-design/icons';
 import { courseApi } from '../../api/course';
+import { uploadFile } from '../../api/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
 
 const { TextArea } = Input;
@@ -24,10 +25,27 @@ interface Subject {
   status: number;
 }
 
+interface Course {
+  id: number;
+  title: string;
+  description: string;
+  teacher_uuid: string;
+  grade_id: number;
+  subject_id: number;
+  cover_image?: string;
+  status: number;
+  sort_order: number;
+  created_time: string;
+  updated_time?: string;
+}
+
 interface CreateCourseComponentProps {
   visible: boolean;
   onCancel: () => void;
   onSuccess: () => void;
+  gradeId?: number; // 传入的年级ID
+  editingCourse?: Course; // 编辑的课程数据
+  isEdit?: boolean; // 是否为编辑模式
 }
 
 interface CreateCourseFormData {
@@ -44,6 +62,9 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
   visible,
   onCancel,
   onSuccess,
+  gradeId,
+  editingCourse,
+  isEdit = false,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -92,10 +113,42 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
 
   useEffect(() => {
     if (visible) {
-      fetchGrades();
+      // 只有在没有传入gradeId时才获取年级列表
+      if (!gradeId) {
+        fetchGrades();
+      }
       fetchSubjects();
+      
+      // 如果是编辑模式，设置表单的初始值
+      if (isEdit && editingCourse) {
+        form.setFieldsValue({
+          title: editingCourse.title,
+          description: editingCourse.description,
+          grade_id: editingCourse.grade_id,
+          subject_id: editingCourse.subject_id,
+          status: editingCourse.status,
+        });
+        // 如果有封面图片，设置文件列表
+        if (editingCourse.cover_image) {
+          setFileList([{
+            uid: '-1',
+            name: 'cover.jpg',
+            status: 'done',
+            url: editingCourse.cover_image,
+          }]);
+        }
+      } else {
+        // 如果传入了gradeId，设置表单的年级值
+        if (gradeId) {
+          form.setFieldsValue({ grade_id: gradeId });
+        }
+      }
+    } else {
+      // 关闭时重置表单和文件列表
+      form.resetFields();
+      setFileList([]);
     }
-  }, [visible]);
+  }, [visible, gradeId, isEdit, editingCourse, form]);
 
   // 处理表单提交
   const handleSubmit = async (values: CreateCourseFormData) => {
@@ -105,22 +158,38 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
       // 准备提交数据
       const submitData = {
         ...values,
-        cover_image: fileList.length > 0 ? fileList[0].url || fileList[0].response?.url : undefined,
+        cover_image: fileList.length > 0 && fileList[0].response?.url ? fileList[0].response.url : undefined,
       };
 
-      const response = await courseApi.createCourse(submitData);
-      console.log('创建课程响应:', response);
-      if (response.code === 200) {
-        message.success('课程创建成功');
-        form.resetFields();
-        setFileList([]);
-        onSuccess();
+      let response;
+      if (isEdit && editingCourse) {
+        // 编辑模式：调用更新API
+        response = await courseApi.updateCourse(editingCourse.id, submitData);
+        console.log('更新课程响应:', response);
+        if (response.code === 200) {
+          message.success('课程更新成功');
+          form.resetFields();
+          setFileList([]);
+          onSuccess();
+        } else {
+          message.error(response.msg || '更新课程失败');
+        }
       } else {
-        message.error(response);
+        // 创建模式：调用创建API
+        response = await courseApi.createCourse(submitData);
+        console.log('创建课程响应:', response);
+        if (response.code === 200) {
+          message.success('课程创建成功');
+          form.resetFields();
+          setFileList([]);
+          onSuccess();
+        } else {
+          message.error(response.msg || '创建课程失败');
+        }
       }
     } catch (error) {
-      console.error('创建课程失败:', error);
-      message.error('创建课程失败');
+      console.error(isEdit ? '更新课程失败:' : '创建课程失败:', error);
+      message.error(isEdit ? '更新课程失败' : '创建课程失败');
     } finally {
       setLoading(false);
     }
@@ -136,6 +205,35 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
   // 处理文件上传
   const handleUploadChange = ({ fileList: newFileList }: { fileList: UploadFile[] }) => {
     setFileList(newFileList);
+  };
+
+  // 自定义上传处理
+  const handleCustomUpload = async (options: any) => {
+    const { file, onSuccess, onError } = options;
+    
+    try {
+      // 使用统一的uploadFile API
+      const result = await uploadFile(file);
+      
+      if (result?.url) {
+        // 更新文件列表状态
+        setFileList([{
+          uid: file.uid || file.name,
+          name: file.name,
+          status: 'done',
+          url: result.url,
+        }]);
+        
+        onSuccess(result, file);
+        message.success('封面上传成功');
+      } else {
+        throw new Error('上传失败');
+      }
+    } catch (error) {
+      console.error('文件上传失败:', error);
+      onError(error);
+      message.error('封面上传失败');
+    }
   };
 
   // 上传前的检查
@@ -155,7 +253,7 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
 
   return (
     <Modal
-      title="创建课程"
+      title={isEdit ? "编辑课程" : "创建课程"}
       open={visible}
       onCancel={handleCancel}
       footer={null}
@@ -195,26 +293,36 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
           />
         </Form.Item>
 
-        <Form.Item
-          name="grade_id"
-          label="年级"
-          rules={[{ required: true, message: '请选择年级' }]}
-        >
-          <Select
-            placeholder="请选择年级"
-            loading={gradesLoading}
-            showSearch
-            filterOption={(input, option) =>
-              (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
-            }
+        {/* 只有在没有传入gradeId时才显示年级选择 */}
+        {!gradeId && (
+          <Form.Item
+            name="grade_id"
+            label="年级"
+            rules={[{ required: true, message: '请选择年级' }]}
           >
-            {grades.map((grade) => (
-              <Option key={grade.id} value={grade.id}>
-                {grade.name}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
+            <Select
+              placeholder="请选择年级"
+              loading={gradesLoading}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.children as unknown as string)?.toLowerCase().includes(input.toLowerCase())
+              }
+            >
+              {grades.map((grade) => (
+                <Option key={grade.id} value={grade.id}>
+                  {grade.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        )}
+
+        {/* 如果传入了gradeId，添加隐藏字段 */}
+        {gradeId && (
+          <Form.Item name="grade_id" hidden>
+            <Input />
+          </Form.Item>
+        )}
 
         <Form.Item
           name="subject_id"
@@ -246,6 +354,7 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
             fileList={fileList}
             onChange={handleUploadChange}
             beforeUpload={beforeUpload}
+            customRequest={handleCustomUpload}
             maxCount={1}
             accept="image/*"
           >
@@ -256,18 +365,6 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
               </div>
             )}
           </Upload>
-        </Form.Item>
-
-        <Form.Item
-          name="sort_order"
-          label="排序"
-          rules={[{ required: true, message: '请输入排序值' }]}
-        >
-          <Input
-            type="number"
-            placeholder="请输入排序值"
-            min={1}
-          />
         </Form.Item>
 
         <Form.Item
@@ -287,7 +384,7 @@ const CreateCourseComponent: React.FC<CreateCourseComponentProps> = ({
               取消
             </Button>
             <Button type="primary" htmlType="submit" loading={loading}>
-              创建课程
+              {isEdit ? "更新课程" : "创建课程"}
             </Button>
           </div>
         </Form.Item>

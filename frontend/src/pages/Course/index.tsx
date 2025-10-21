@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Menu, Card, List, Spin, message, Empty, Tag, Button } from 'antd';
-import { BookOutlined, FileTextOutlined, DownloadOutlined, PlusOutlined } from '@ant-design/icons';
+import { Layout, Menu, Card, List, Spin, message, Empty, Tag, Button, Modal, Dropdown } from 'antd';
+import { BookOutlined, FileTextOutlined, DownloadOutlined, PlusOutlined, EditOutlined, DeleteOutlined, MoreOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
 import { courseApi } from '../../api/course';
 import CourseDetailComponent from '../../components/CourseDetailComponent';
 import CreateCourseComponent from '../../components/CreateCourseComponent';
@@ -70,6 +71,8 @@ const CoursePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [gradesLoading, setGradesLoading] = useState(true);
   const [createCourseVisible, setCreateCourseVisible] = useState(false);
+  const [editCourseVisible, setEditCourseVisible] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   
   // 获取用户信息，检查是否为超级用户
   const userData = useUserSelector((state) => state.user.user);
@@ -163,6 +166,56 @@ const CoursePage: React.FC = () => {
     setCreateCourseVisible(false);
   };
 
+  // 处理编辑课程
+  const handleEditCourse = (course: Course) => {
+    setEditingCourse(course);
+    setEditCourseVisible(true);
+  };
+
+  // 处理编辑课程成功
+  const handleEditCourseSuccess = () => {
+    setEditCourseVisible(false);
+    setEditingCourse(null);
+    // 刷新当前年级的课程列表
+    if (selectedGradeId) {
+      fetchCourses(selectedGradeId);
+    }
+  };
+
+  // 处理编辑课程取消
+  const handleEditCourseCancel = () => {
+    setEditCourseVisible(false);
+    setEditingCourse(null);
+  };
+
+  // 处理删除课程
+  const handleDeleteCourse = (course: Course) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除课程"${course.title}"吗？此操作不可撤销。`,
+      okText: '确定',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: async () => {
+        try {
+          const response = await courseApi.deleteCourse(course.id);
+          if (response.code === 200) {
+            message.success('删除课程成功');
+            // 刷新当前年级的课程列表
+            if (selectedGradeId) {
+              fetchCourses(selectedGradeId);
+            }
+          } else {
+            message.error(response.msg || '删除课程失败');
+          }
+        } catch (error) {
+          console.error('删除课程失败:', error);
+          message.error('删除课程失败');
+        }
+      }
+    });
+  };
+
   const getStatusTag = (status: number) => {
     switch (status) {
       case 1:
@@ -248,102 +301,92 @@ const CoursePage: React.FC = () => {
                   xxl: 4,
                 }}
                 dataSource={courses}
-                renderItem={(course) => (
-                  <List.Item>
-                    <Card
-                      hoverable
-                      className="course-card"
-                      cover={
-                        course.cover_image ? (
-                          <img
-                            alt={course.title}
-                            src={course.cover_image}
-                            className="course-cover"
-                          />
-                        ) : (
-                          <div className="course-cover-placeholder">
-                            <BookOutlined style={{ fontSize: 48, color: '#ccc' }} />
-                          </div>
-                        )
-                      }
-                      actions={[
-                        <Button 
-                          type="link" 
-                          size="small"
-                          onClick={() => handleCourseSelect(course.id)}
-                        >
-                          查看详情
-                        </Button>
-                      ]}
-                    >
-                      <Card.Meta
-                        title={
-                          <div className="course-title">
-                            {course.title}
-                            {getStatusTag(course.status)}
-                          </div>
-                        }
-                        description={
-                          <div className="course-description">
-                            <p>{course.description}</p>
-                            {course.subject && (
-                              <Tag color="blue">{course.subject.name}</Tag>
-                            )}
-                          </div>
-                        }
-                      />
-                      
-                      {/* 课程资源列表 */}
-                      {course.resources && course.resources.length > 0 && (
-                        <div className="course-resources">
-                          <h4>
-                            <FileTextOutlined /> 课程资源 ({course.resources.length})
-                          </h4>
-                          <List
-                            size="small"
-                            dataSource={course.resources.slice(0, 3)} // 只显示前3个资源
-                            renderItem={(resource) => (
-                              <List.Item
-                                className="resource-item"
-                                actions={[
-                                  <Button
-                                    type="link"
-                                    size="small"
-                                    icon={<DownloadOutlined />}
-                                  >
-                                    下载
-                                  </Button>
-                                ]}
-                              >
-                                <List.Item.Meta
-                                  title={
-                                    <span className="resource-title">
-                                      {resource.title}
-                                    </span>
-                                  }
-                                  description={
-                                    <div className="resource-info">
-                                      <span>{resource.file_type}</span>
-                                      <span>{formatFileSize(resource.file_size)}</span>
-                                      <span>下载: {resource.download_count}</span>
-                                    </div>
-                                  }
-                                />
-                              </List.Item>
-                            )}
-                          />
-                          {course.resources.length > 3 && (
-                            <div className="more-resources">
-                              <Button type="link" size="small">
-                                查看更多资源 ({course.resources.length - 3})
-                              </Button>
+                renderItem={(course) => {
+                  // 创建超级用户菜单项
+                  const menuItems: MenuProps['items'] = userData?.is_superuser ? [
+                    {
+                      key: 'edit',
+                      label: '编辑课程',
+                      icon: <EditOutlined />,
+                      onClick: () => handleEditCourse(course),
+                    },
+                    {
+                      key: 'delete',
+                      label: '删除课程',
+                      icon: <DeleteOutlined />,
+                      danger: true,
+                      onClick: () => handleDeleteCourse(course),
+                    },
+                  ] : [];
+
+                  return (
+                    <List.Item>
+                      <Card
+                        hoverable
+                        className="course-card"
+                        cover={
+                          course.cover_image ? (
+                            <img
+                              alt={course.title}
+                              src={course.cover_image}
+                              className="course-cover"
+                            />
+                          ) : (
+                            <div className="course-cover-placeholder">
+                              <BookOutlined style={{ fontSize: 48, color: '#ccc' }} />
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </Card>
-                  </List.Item>
-                )}
+                          )
+                        }
+                        actions={[
+                          <Button 
+                            type="link" 
+                            size="small"
+                            onClick={() => handleCourseSelect(course.id)}
+                          >
+                            查看详情
+                          </Button>
+                        ]}
+                      >
+                        {/* 右上角菜单按钮 - 只有超级用户可见 */}
+                        {userData?.is_superuser && (
+                          <div className="course-card-menu">
+                            <Dropdown
+                              menu={{ items: menuItems }}
+                              placement="bottomRight"
+                              trigger={['click']}
+                            >
+                              <Button
+                                type="text"
+                                size="small"
+                                icon={<MoreOutlined />}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </Dropdown>
+                          </div>
+                        )}
+                        
+                        <Card.Meta
+                          title={
+                            <div className="course-title">
+                              {course.title}
+                              {getStatusTag(course.status)}
+                            </div>
+                          }
+                          description={
+                            <div className="course-description">
+                              <p>{course.description}</p>
+                              {course.subject && (
+                                <Tag color="blue">{course.subject.name}</Tag>
+                              )}
+                            </div>
+                          }
+                        />
+                        
+                
+                      </Card>
+                    </List.Item>
+                  );
+                }}
               />
             )}
           </Spin>
@@ -355,6 +398,16 @@ const CoursePage: React.FC = () => {
         visible={createCourseVisible}
         onCancel={handleCreateCourseCancel}
         onSuccess={handleCreateCourseSuccess}
+        gradeId={selectedGradeId || undefined}
+      />
+      
+      {/* 编辑课程组件 */}
+      <CreateCourseComponent
+        visible={editCourseVisible}
+        onCancel={handleEditCourseCancel}
+        onSuccess={handleEditCourseSuccess}
+        editingCourse={editingCourse}
+        isEdit={true}
       />
     </div>
   );

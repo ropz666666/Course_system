@@ -151,13 +151,13 @@ class CourseService:
         
         # 如果更新年级，检查年级是否存在
         if obj_in.grade_id is not None:
-            grade_obj = await course_grade.get(db, id=obj_in.grade_id)
+            grade_obj = await course_grade.get_by_id(db, id=obj_in.grade_id)
             if not grade_obj:
                 raise errors.NotFoundError(msg="年级不存在")
         
         # 如果更新科目，检查科目是否存在
         if obj_in.subject_id is not None:
-            subject_obj = await course_subject.get(db, id=obj_in.subject_id)
+            subject_obj = await course_subject.get_by_id(db, id=obj_in.subject_id)
             if not subject_obj:
                 raise errors.NotFoundError(msg="科目不存在")
         
@@ -172,5 +172,6 @@ class CourseService:
         if not course_obj:
             raise errors.NotFoundError(msg="课程不存在")
         
-        await course.remove(db, id=course_id)
+        await db.delete(course_obj)
+        await db.commit()
         return True
